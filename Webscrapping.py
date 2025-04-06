@@ -25,10 +25,22 @@ WebDriverWait(driver, 10).until(
 ).click()
 print("Clicked on 'Gérer vos préférences'.")
 
-WebDriverWait(driver, 10).until(
-    EC.element_to_be_clickable((By.XPATH, "//button//p[contains(text(), 'Confirmer les choix')]"))
-).click()
-print("Clicked on 'Confirmer les choix'.")
+# Function to click the correct button ('Confirmer les choix' or 'Enregistrer et fermer')
+def click_confirm_button():
+    try:
+        # Try to click on 'Confirmer les choix'
+        WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button//p[contains(text(), 'Confirmer les choix')]"))
+        ).click()
+        print("Clicked on 'Confirmer les choix'.")
+    except:
+        # If not found, try 'Enregistrer et fermer'
+        WebDriverWait(driver, 30).until(
+            EC.element_to_be_clickable((By.XPATH, "//button//p[contains(text(), 'Enregistrer et fermer')]"))
+        ).click()
+        print("Clicked on 'Enregistrer et fermer'.")
+
+click_confirm_button()
 
 # Clear and update the origin field (Strasbourg)
 origin_input = WebDriverWait(driver, 15).until(
@@ -46,12 +58,19 @@ body.click()  # Click somewhere else on the page
 destination_input = WebDriverWait(driver, 15).until(
     EC.presence_of_element_located((By.ID, "place-autocomplete-destination"))
 )
+
+# Pause to allow the page to process the changes
+time.sleep(0.1)
+
 destination_input.clear()  # Clear the initial value in the destination field
 destination_input.send_keys('Paris, France')
 
-# Click somewhere on the page (e.g., on the body element) to "blur" the inputs and make the website register the updated values
-body = driver.find_element(By.TAG_NAME, 'body')
-body.click()  # Click somewhere else on the page
+# Use double quotes to enclose the XPath string
+discover_button = driver.find_element(By.XPATH, "//span[text()=\"Découvrez comment aller n'importe où\"]")
+discover_button.click()
+
+# Pause to allow the page to process the changes
+time.sleep(1)
 
 # Uncheck the checkbox to show the itinerary table
 checkbox = WebDriverWait(driver, 10).until(
