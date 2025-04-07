@@ -30,3 +30,19 @@ class RecuperateurSitesTouristiques:
     
     def obtenir_sites_touristiques(self, ville, nombre_sites=10, langue="français"):
         """
+       Obtient les principaux sites touristiques pour une ville
+        
+        Args:
+            ville (str): Le nom de la ville
+            nombre_sites (int): Le nombre de sites touristiques à retourner
+            langue (str): La langue dans laquelle retourner les résultats
+            
+        Returns:
+            list: Liste de dictionnaires contenant les informations sur les sites touristiques
+        """
+        # Vérification du cache
+        cle_cache = f"{ville}_{nombre_sites}_{langue}"
+        if cle_cache in self.cache:
+            print(f"Utilisation des données en cache pour {ville}")
+            return self.cache[cle_cache]
+        
