@@ -8,9 +8,9 @@ import time
 # Chargement des variables d'environnement ou configuration directe de la clé
 try:
     load_dotenv()
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", " key! ")
 except:
-    GROQ_API_KEY = "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"
+    GROQ_API_KEY = " key! "
 
 class RecuperateurSitesTouristiques:
     """
