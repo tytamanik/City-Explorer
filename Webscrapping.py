@@ -19,6 +19,7 @@ user_agent = ua.random
 options = webdriver.ChromeOptions()
 options.add_argument("--start-maximized")
 options.add_argument(f'user-agent={user_agent}')
+options.add_argument("--lang=fr")
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
 # Initialize a DataFrame to store the results
