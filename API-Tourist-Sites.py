@@ -30,7 +30,7 @@ class RecuperateurSitesTouristiques:
     
     def obtenir_sites_touristiques(self, ville, nombre_sites=10, langue="français"):
         """
-       Obtient les principaux sites touristiques pour une ville
+        Obtient les principaux sites touristiques pour une ville
         
         Args:
             ville (str): Le nom de la ville
@@ -45,4 +45,15 @@ class RecuperateurSitesTouristiques:
         if cle_cache in self.cache:
             print(f"Utilisation des données en cache pour {ville}")
             return self.cache[cle_cache]
+        
+        # Construction du prompt pour Groq
+        prompt = f"""
+        Veuillez fournir une liste des {nombre_sites} sites touristiques les plus importants de {ville}.
+        
+        Pour chaque site touristique, incluez:
+        1. Le nom
+        2. Une brève description (1-2 phrases)  
+        3. La catégorie (musée, monument, parc, site historique, site religieux, etc.)
+        4. L'adresse (aussi précise que possible)
+        
         
