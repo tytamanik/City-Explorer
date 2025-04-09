@@ -56,4 +56,34 @@ class RecuperateurSitesTouristiques:
         3. La catégorie (musée, monument, parc, site historique, site religieux, etc.)
         4. L'adresse (aussi précise que possible)
         
+        La réponse doit être en {langue} et au format JSON, comme suit:
+        [
+            {{
+                "nom": "Nom du site",
+                "description": "Description brève",
+                "categorie": "Catégorie",
+                "adresse": "Adresse complète"
+            }},
+            ...
+        ]
+        
+        Répondez uniquement avec le tableau JSON, sans texte supplémentaire ou markdown.
+        """
+        
+        # Préparation de la requête API
+        en_tetes = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.cle_api}"
+        }
+        charge_utile = {
+            "model": "llama3-70b-8192",  # Utilisation du modèle Llama 3 70B de Groq
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "temperature": 0.2,
+            "max_tokens": 2048
+        }
         
