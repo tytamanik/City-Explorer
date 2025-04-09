@@ -26,7 +26,7 @@ class RecuperateurSitesTouristiques:
         """
         self.cle_api = cle_api or GROQ_API_KEY
         self.url_base = "https://api.groq.com/openai/v1/chat/completions"
-        self.cache = {}  # Cache pour éviter des requêtes répétées pour la même ville
+        self.cache = {}  
     
     def obtenir_sites_touristiques(self, ville, nombre_sites=10, langue="français"):
         """
