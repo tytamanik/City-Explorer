@@ -86,4 +86,30 @@ class RecuperateurSitesTouristiques:
             "temperature": 0.2,
             "max_tokens": 2048
         }
-        
+
+try:
+            # Envoi de la requête à l'API
+            reponse = requests.post(self.url_base, headers=en_tetes, json=charge_utile)
+            reponse.raise_for_status()  # Lève une exception pour les erreurs HTTP
+            
+            # Analyse de la réponse
+            resultat = reponse.json()
+            
+            # Extraction du contenu de la réponse
+            contenu = resultat['choices'][0]['message']['content']
+            
+            # Nettoyage du contenu pour obtenir uniquement le JSON
+            contenu = contenu.strip()
+            if contenu.startswith('```json'):
+                contenu = contenu[7:]
+            if contenu.endswith('```'):
+                contenu = contenu[:-3]
+            contenu = contenu.strip()
+            
+            # Analyse du JSON
+            sites_touristiques = json.loads(contenu)
+            
+            # Ajout des données dans le cache
+            self.cache[cle_cache] = sites_touristiques
+            
+            return sites_touristiques
