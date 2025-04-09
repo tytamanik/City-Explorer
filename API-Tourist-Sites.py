@@ -76,7 +76,7 @@ class RecuperateurSitesTouristiques:
             "Authorization": f"Bearer {self.cle_api}"
         }
         charge_utile = {
-            "model": "llama3-70b-8192",  # Utilisation du modèle Llama 3 70B de Groq
+            "model": "llama3-70b-8192",  
             "messages": [
                 {
                     "role": "user",
