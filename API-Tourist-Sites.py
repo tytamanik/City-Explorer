@@ -147,3 +147,10 @@ try:
     def obtenir_sites_filtres_par_categorie(self, ville, categories, nombre_sites=20, langue="français"):
         """
         Obtient des sites touristiques filtrés par certaines catégories
+
+        Args:
+            ville (str): Le nom de la ville
+            categories (list): La liste des catégories souhaitées
+            nombre_sites (int): Le nombre total de sites à obtenir
+            langue (str): La langue dans laquelle retourner les résultats
+            
