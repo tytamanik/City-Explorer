@@ -113,3 +113,26 @@ try:
             self.cache[cle_cache] = sites_touristiques
             
             return sites_touristiques
+
+        except requests.exceptions.RequestException as e:
+            print(f"Erreur lors de la requête API: {e}")
+            return []
+        except json.JSONDecodeError as e:
+            print(f"Erreur lors du décodage JSON: {e}")
+            print(f"Contenu reçu: {contenu}")
+            return []
+        except Exception as e:
+            print(f"Erreur inattendue: {e}")
+            return []
+    
+    def sauvegarder_dans_fichier(self, ville, sites, nom_fichier=None):
+        """
+        Sauvegarde les sites touristiques dans un fichier JSON
+        
+        Args:
+            ville (str): Le nom de la ville
+            sites (list): La liste des sites touristiques
+            nom_fichier (str, optional): Le nom du fichier
+        """
+        if not nom_fichier:
+            nom_fichier = f"{ville.lower().replace(' ', '_')}_sites_touristiques.json"
