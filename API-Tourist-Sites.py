@@ -136,3 +136,14 @@ try:
         """
         if not nom_fichier:
             nom_fichier = f"{ville.lower().replace(' ', '_')}_sites_touristiques.json"
+            
+        try:
+            with open(nom_fichier, 'w', encoding='utf-8') as f:
+                json.dump(sites, f, ensure_ascii=False, indent=4)
+            print(f"Les données ont été sauvegardées dans {nom_fichier}")
+        except Exception as e:
+            print(f"Erreur lors de la sauvegarde des données: {e}")
+
+    def obtenir_sites_filtres_par_categorie(self, ville, categories, nombre_sites=20, langue="français"):
+        """
+        Obtient des sites touristiques filtrés par certaines catégories
