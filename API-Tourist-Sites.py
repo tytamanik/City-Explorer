@@ -153,4 +153,13 @@ try:
             categories (list): La liste des catégories souhaitées
             nombre_sites (int): Le nombre total de sites à obtenir
             langue (str): La langue dans laquelle retourner les résultats
-            
+
+             Returns:
+            list: La liste filtrée des sites touristiques
+        """
+        # Obtient un plus grand nombre de sites pour avoir de quoi filtrer
+        tous_sites = self.obtenir_sites_touristiques(ville, nombre_sites, langue)
+        
+        # Filtrage par catégorie
+        if not categories:
+            return tous_sites
