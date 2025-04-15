@@ -5,12 +5,13 @@ import os
 from dotenv import load_dotenv
 import time
 
+DEFAULT_API_KEY = " key!"
 # Chargement des variables d'environnement ou configuration directe de la clé
 try:
     load_dotenv()
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY", " key! ")
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", DEFAULT_API_KEY)
 except:
-    GROQ_API_KEY = " key! "
+    GROQ_API_KEY = DEFAULT_API_KEY
 
 class RecuperateurSitesTouristiques:
     """
