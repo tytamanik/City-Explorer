@@ -5,20 +5,19 @@ import os
 from dotenv import load_dotenv
 import time
 
-DEFAULT_API_KEY = " key!"
 # Chargement des variables d'environnement ou configuration directe de la clé
 try:
     load_dotenv()
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY", DEFAULT_API_KEY)
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", " key!")
 except:
-    GROQ_API_KEY = DEFAULT_API_KEY
+    GROQ_API_KEY = " key! "
 
 class RecuperateurSitesTouristiques:
     """
     Classe pour récupérer les sites touristiques d'une ville en utilisant l'API Groq
     """
     
-   def __init__(self, cle_api=None):
+    def __init__(self, cle_api=None):
         """
         Initialise le récupérateur avec la clé API
         
@@ -267,10 +266,11 @@ if __name__ == "__main__":
                 nom = site.get('nom', site.get('name', 'Non spécifié'))
                 categorie = site.get('categorie', site.get('category', 'Non spécifiée'))
                 description = site.get('description', 'Non spécifiée')
+                adresse = site.get('adresse', site.get('address', 'Non spécifiée'))
                 
                 print(f"{i}. {nom} - {categorie}")
                 print(f"   {description}")
+                print(f"   Adresse: {adresse}")
                 print()
     else:
         print(f"Je n'ai pas pu obtenir de sites touristiques pour {nom_ville}.")
-
