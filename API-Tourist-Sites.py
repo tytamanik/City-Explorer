@@ -17,7 +17,7 @@ class RecuperateurSitesTouristiques:
     Classe pour récupérer les sites touristiques d'une ville en utilisant l'API Groq
     """
     
-    def __init__(self, cle_api=None):
+   def __init__(self, cle_api=None):
         """
         Initialise le récupérateur avec la clé API
         
@@ -26,7 +26,7 @@ class RecuperateurSitesTouristiques:
         """
         self.cle_api = cle_api or GROQ_API_KEY
         self.url_base = "https://api.groq.com/openai/v1/chat/completions"
-        self.cache = {}  
+        self.cache = {}  # Cache pour éviter des requêtes répétées pour la même ville
     
     def obtenir_sites_touristiques(self, ville, nombre_sites=10, langue="français"):
         """
@@ -76,7 +76,7 @@ class RecuperateurSitesTouristiques:
             "Authorization": f"Bearer {self.cle_api}"
         }
         charge_utile = {
-            "model": "llama3-70b-8192",  
+            "model": "llama3-70b-8192",  # Utilisation du modèle Llama 3 70B de Groq
             "messages": [
                 {
                     "role": "user",
@@ -86,8 +86,8 @@ class RecuperateurSitesTouristiques:
             "temperature": 0.2,
             "max_tokens": 2048
         }
-
-try:
+        
+        try:
             # Envoi de la requête à l'API
             reponse = requests.post(self.url_base, headers=en_tetes, json=charge_utile)
             reponse.raise_for_status()  # Lève une exception pour les erreurs HTTP
@@ -113,7 +113,7 @@ try:
             self.cache[cle_cache] = sites_touristiques
             
             return sites_touristiques
-
+            
         except requests.exceptions.RequestException as e:
             print(f"Erreur lors de la requête API: {e}")
             return []
@@ -136,7 +136,7 @@ try:
         """
         if not nom_fichier:
             nom_fichier = f"{ville.lower().replace(' ', '_')}_sites_touristiques.json"
-            
+        
         try:
             with open(nom_fichier, 'w', encoding='utf-8') as f:
                 json.dump(sites, f, ensure_ascii=False, indent=4)
@@ -144,34 +144,68 @@ try:
         except Exception as e:
             print(f"Erreur lors de la sauvegarde des données: {e}")
 
-    def obtenir_sites_filtres_par_categorie(self, ville, categories, nombre_sites=20, langue="français"):
+    def obtenir_sites_filtres_par_categorie(self, ville, categories, exclusions=None, nombre_sites=20, langue="français"):
         """
-        Obtient des sites touristiques filtrés par certaines catégories
-
+        Obtient des sites touristiques filtrés par certaines catégories et exclut d'autres
+        
         Args:
             ville (str): Le nom de la ville
             categories (list): La liste des catégories souhaitées
+            exclusions (list): La liste des catégories à exclure
             nombre_sites (int): Le nombre total de sites à obtenir
             langue (str): La langue dans laquelle retourner les résultats
-
-             Returns:
+            
+        Returns:
             list: La liste filtrée des sites touristiques
         """
         # Obtient un plus grand nombre de sites pour avoir de quoi filtrer
         tous_sites = self.obtenir_sites_touristiques(ville, nombre_sites, langue)
         
-        # Filtrage par catégorie
-        if not categories:
+        # Si aucun filtre d'inclusion ou d'exclusion, retourne tous les sites
+        if not categories and not exclusions:
             return tous_sites
             
-  sites_filtres = []
+        sites_filtres = []
         for site in tous_sites:
-            # Vérifie si la catégorie du site correspond à l'une des catégories demandées
-            categorie_site = site.get("categorie", "").lower() if "categorie" in site else site.get("nom", "").lower()
-            if any(categorie.lower() in categorie_site for categorie in categories):
+            # Récupère la catégorie du site (en s'adaptant aux différentes langues)
+            categorie_site = site.get("categorie", site.get("category", "")).lower()
+            
+            # Vérifie si la catégorie est dans les exclusions
+            if exclusions and any(exclusion.lower() in categorie_site for exclusion in exclusions):
+                continue
+                
+            # Si des catégories d'inclusion sont spécifiées, vérifie si le site correspond
+            if categories:
+                if any(categorie.lower() in categorie_site for categorie in categories):
+                    sites_filtres.append(site)
+            else:
+                # Si pas de catégories d'inclusion mais seulement des exclusions, ajoute le site
                 sites_filtres.append(site)
                 
         return sites_filtres
+    
+    def extraire_categories_disponibles(self, ville, nombre_sites=20, langue="français"):
+        """
+        Extrait toutes les catégories disponibles pour une ville
+        
+        Args:
+            ville (str): Le nom de la ville
+            nombre_sites (int): Le nombre de sites à analyser
+            langue (str): La langue des résultats
+            
+        Returns:
+            list: Liste des catégories uniques disponibles
+        """
+        tous_sites = self.obtenir_sites_touristiques(ville, nombre_sites, langue)
+        
+        # Extraction des catégories uniques
+        categories = set()
+        for site in tous_sites:
+            categorie = site.get("categorie", site.get("category", ""))
+            if categorie:
+                categories.add(categorie)
+                
+        return sorted(list(categories))
 
 
 # Exemple d'utilisation
@@ -179,7 +213,7 @@ if __name__ == "__main__":
     # Création d'une instance de la classe pour récupérer les sites touristiques
     recuperateur = RecuperateurSitesTouristiques()
     
-    # Obtention des sites touristiques pour une ville (par exemple, Luxembourg)
+    # Obtention des sites touristiques pour une ville
     nom_ville = input("Entrez le nom de la ville pour laquelle vous souhaitez des sites touristiques: ")
     nombre_sites = int(input("Combien de sites touristiques souhaitez-vous obtenir? "))
     langue = input("Dans quelle langue souhaitez-vous les résultats (français, anglais, roumain)? ")
@@ -200,19 +234,33 @@ if __name__ == "__main__":
             print(f"   {description}")
             print(f"   Adresse: {adresse}")
             print()
-
-# Sauvegarde des données dans un fichier JSON
+        
+        # Sauvegarde des données dans un fichier JSON
         recuperateur.sauvegarder_dans_fichier(nom_ville, sites_touristiques)
         
-        # Exemple de filtrage par catégorie
+        # Affichage de toutes les catégories disponibles
+        categories_disponibles = recuperateur.extraire_categories_disponibles(nom_ville)
+        print("\nCatégories de sites touristiques disponibles à", nom_ville, ":")
+        for categorie in categories_disponibles:
+            print(f"- {categorie}")
+        
+        # Filtrage par catégorie
         print("\nSouhaitez-vous filtrer les résultats par catégorie? (oui/non)")
         choix_filtre = input().lower()
         if choix_filtre == "oui":
-            print("Entrez les catégories souhaitées séparées par des virgules (musée, parc, etc.):")
+            print("Entrez les catégories souhaitées séparées par des virgules (musée, parc, église, monument, site historique, etc.):")
             categories = [cat.strip() for cat in input().split(",")]
             
-            sites_filtres = recuperateur.obtenir_sites_filtres_par_categorie(nom_ville, categories)
-            print(f"\nJ'ai trouvé {len(sites_filtres)} sites dans les catégories sélectionnées:")
+            # Ajout du filtre d'exclusion
+            print("\nSouhaitez-vous exclure certains types de sites? (oui/non)")
+            choix_exclusion = input().lower()
+            exclusions = []
+            if choix_exclusion == "oui":
+                print("Entrez les types de sites que vous ne souhaitez PAS visiter, séparés par des virgules:")
+                exclusions = [exc.strip() for exc in input().split(",")]
+            
+            sites_filtres = recuperateur.obtenir_sites_filtres_par_categorie(nom_ville, categories, exclusions)
+            print(f"\nJ'ai trouvé {len(sites_filtres)} sites correspondant à vos critères:")
             
             for i, site in enumerate(sites_filtres, 1):
                 nom = site.get('nom', site.get('name', 'Non spécifié'))
@@ -224,3 +272,4 @@ if __name__ == "__main__":
                 print()
     else:
         print(f"Je n'ai pas pu obtenir de sites touristiques pour {nom_ville}.")
+
