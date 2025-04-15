@@ -163,3 +163,40 @@ try:
         # Filtrage par catégorie
         if not categories:
             return tous_sites
+            
+  sites_filtres = []
+        for site in tous_sites:
+            # Vérifie si la catégorie du site correspond à l'une des catégories demandées
+            categorie_site = site.get("categorie", "").lower() if "categorie" in site else site.get("nom", "").lower()
+            if any(categorie.lower() in categorie_site for categorie in categories):
+                sites_filtres.append(site)
+                
+        return sites_filtres
+
+
+# Exemple d'utilisation
+if __name__ == "__main__":
+    # Création d'une instance de la classe pour récupérer les sites touristiques
+    recuperateur = RecuperateurSitesTouristiques()
+    
+    # Obtention des sites touristiques pour une ville (par exemple, Luxembourg)
+    nom_ville = input("Entrez le nom de la ville pour laquelle vous souhaitez des sites touristiques: ")
+    nombre_sites = int(input("Combien de sites touristiques souhaitez-vous obtenir? "))
+    langue = input("Dans quelle langue souhaitez-vous les résultats (français, anglais, roumain)? ")
+    
+    print(f"\nRécupération des sites touristiques pour {nom_ville}...")
+    sites_touristiques = recuperateur.obtenir_sites_touristiques(nom_ville, nombre_sites, langue)
+    
+    if sites_touristiques:
+        print(f"\nJ'ai trouvé {len(sites_touristiques)} sites touristiques à {nom_ville}:\n")
+        for i, site in enumerate(sites_touristiques, 1):
+            # Adaptation aux différentes structures de réponse possibles (français ou autre langue)
+            nom = site.get('nom', site.get('name', 'Non spécifié'))
+            categorie = site.get('categorie', site.get('category', 'Non spécifiée'))
+            description = site.get('description', 'Non spécifiée')
+            adresse = site.get('adresse', site.get('address', 'Non spécifiée'))
+            
+            print(f"{i}. {nom} - {categorie}")
+            print(f"   {description}")
+            print(f"   Adresse: {adresse}")
+            print()
