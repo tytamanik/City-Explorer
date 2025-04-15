@@ -200,3 +200,27 @@ if __name__ == "__main__":
             print(f"   {description}")
             print(f"   Adresse: {adresse}")
             print()
+
+# Sauvegarde des données dans un fichier JSON
+        recuperateur.sauvegarder_dans_fichier(nom_ville, sites_touristiques)
+        
+        # Exemple de filtrage par catégorie
+        print("\nSouhaitez-vous filtrer les résultats par catégorie? (oui/non)")
+        choix_filtre = input().lower()
+        if choix_filtre == "oui":
+            print("Entrez les catégories souhaitées séparées par des virgules (musée, parc, etc.):")
+            categories = [cat.strip() for cat in input().split(",")]
+            
+            sites_filtres = recuperateur.obtenir_sites_filtres_par_categorie(nom_ville, categories)
+            print(f"\nJ'ai trouvé {len(sites_filtres)} sites dans les catégories sélectionnées:")
+            
+            for i, site in enumerate(sites_filtres, 1):
+                nom = site.get('nom', site.get('name', 'Non spécifié'))
+                categorie = site.get('categorie', site.get('category', 'Non spécifiée'))
+                description = site.get('description', 'Non spécifiée')
+                
+                print(f"{i}. {nom} - {categorie}")
+                print(f"   {description}")
+                print()
+    else:
+        print(f"Je n'ai pas pu obtenir de sites touristiques pour {nom_ville}.")
