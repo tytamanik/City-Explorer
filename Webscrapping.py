@@ -1,158 +1,139 @@
-import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.keys import Keys
 from fake_useragent import UserAgent
 import time
 
-# Define your list of cities
-cities = ['Paris, France', 'Strasbourg, France', 'Iloilo, Philippines', 'Tokyo, Japon']
-
-# Initialize UserAgent
-ua = UserAgent()
-user_agent = ua.random
-
-# Setup WebDriver options
-options = webdriver.ChromeOptions()
-options.add_argument("--start-maximized")
-options.add_argument(f'user-agent={user_agent}')
-options.add_argument("--lang=fr")
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
-# Initialize a DataFrame to store the results
-itinerary_df = pd.DataFrame()
-
-# Start the scraping process
-start_time = time.time()
-
-
 def get_itineraries_for_pair(origin, destination):
-    driver.get("https://www.rome2rio.com/fr/")
+    print(f"Scraping {origin} → {destination}...")
 
-    # Wait and click 'Gérer vos préférences' for cookies
+    ua = UserAgent()
+    options = webdriver.ChromeOptions()
+    #options.add_argument("--headless")
+    options.add_argument("--lang=fr")
+    options.add_argument(f"user-agent={ua.random}")
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
     try:
-        WebDriverWait(driver, 0.1).until(
-            EC.element_to_be_clickable((By.XPATH, "//button//p[contains(text(), 'Gérer vos préférences')]"))
-        ).click()
-    except:
-        print("pass")
+        # Aller sur la page
+        driver.get("https://www.rome2rio.com/fr/")
+        time.sleep(1)
 
-    # Function to click the correct button ('Confirmer les choix' or 'Enregistrer et fermer')
-    def click_confirm_button():
+        # Gérer les cookies
         try:
-            WebDriverWait(driver, 0.1).until(
-                EC.element_to_be_clickable((By.XPATH, "//button//p[contains(text(), 'Confirmer les choix')]"))
+            WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.XPATH, "//p[contains(text(), 'Autoriser tout')]"))
             ).click()
         except:
-            WebDriverWait(driver, 0.1).until(
-                EC.element_to_be_clickable((By.XPATH, "//button//p[contains(text(), 'Enregistrer et fermer')]"))
-            ).click()
+            try:
+                WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, "//p[contains(text(), 'Gérer vos préférences')]"))
+                ).click()
+                WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, "//p[contains(text(), 'Confirmer les choix')]"))
+                ).click()
+            except:
+                pass
 
-    try:
-        click_confirm_button()
-    except:
-        print("pas de cookies")
+        # Champ origine
+        try:
+            origin_input = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.ID, "place-autocomplete-origin"))
+            )
+            origin_input.clear()
+            origin_input.send_keys(origin)
 
-    # Clear and update the origin and destination fields
-    origin_input = WebDriverWait(driver, 15).until(
-        EC.presence_of_element_located((By.ID, "place-autocomplete-origin"))
-    )
-    origin_input.clear()
-    origin_input.send_keys(origin)
+            # Use double quotes to enclose the XPath string
+            discover_button = driver.find_element(By.XPATH, "//span[text()=\"Découvrez comment aller n'importe où\"]")
+            discover_button.click()
+            print("Origine renseignée.")
+            
+        except Exception as e:
+            print("Erreur sur le champ origine :", e)
+            driver.save_screenshot("origin_input_error.png")
+            return [f"Erreur de saisie de l'origine : {origin}"]
 
-    # Use double quotes to enclose the XPath string
-    discover_button = driver.find_element(By.XPATH, "//span[text()=\"Découvrez comment aller n'importe où\"]")
-    discover_button.click()
+        # Champ destination
+        try:
+            destination_input = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.ID, "place-autocomplete-destination"))
+            )
+            destination_input.clear()
+            destination_input.send_keys(destination)
+            time.sleep(1)  # laisse le temps aux suggestions de se charger
 
-    destination_input = WebDriverWait(driver, 15).until(
-        EC.presence_of_element_located((By.ID, "place-autocomplete-destination"))
-    )
-    time.sleep(0.1)  # Wait for the page to process
-    destination_input.clear()
-    destination_input.send_keys(destination)
+            destination_input.clear()
+            destination_input.send_keys(destination)
+            print("Destination sélectionnée via autocomplete.")
 
-    # Click the "Discover how to get anywhere" button
-    discover_button = driver.find_element(By.XPATH, "//span[text()=\"Découvrez comment aller n'importe où\"]")
-    discover_button.click()
+        except Exception as e:
+            print("Erreur sur le champ destination :", e)
+            driver.save_screenshot("destination_input_error.png")
+            return [f"Erreur de saisie de la destination : {destination}"]
 
-    time.sleep(1)  # Wait for the results to load
-
-    # Uncheck the checkbox to show the itinerary table if it's already checked
-    checkbox = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.ID, "s0-1-0-0-17-10-0-5-7-search-partners"))
-    )
-    if checkbox.is_selected():
-        checkbox.click()
-
-    # After updating both locations, click the search button
-    WebDriverWait(driver, 15).until(
-        EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "a.flex.h-11.items-center.justify-center.rounded-lg.bg-rome2rio-pink"))
-    ).click()
-
-    # Wait for the itinerary results to be fully loaded
-    WebDriverWait(driver, 30).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, "div[data-testid='trip-search-result-0']"))
-    )
-
-    # Function to click on the "Voir x options supplémentaires" button
-    def click_show_more(driver):
-        load_more_button = WebDriverWait(driver, 0.1).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "button[data-testid='show-more-0']"))
+        # Uncheck the checkbox to show the itinerary table if it's already checked
+        checkbox = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.ID, "s0-1-0-0-17-10-0-5-7-search-partners"))
         )
-        load_more_button.click()
-        return True
+        if checkbox.is_selected():
+            checkbox.click()
 
-    try:
-        click_show_more(driver)
-    except:
-        print("Pas d'autres itinéraires")
+        # After updating both locations, click the search button
+        WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "a.flex.h-11.items-center.justify-center.rounded-lg.bg-rome2rio-pink"))
+        ).click()
 
-    # Scraping itinerary details
-    itinerary_details = []
-    itinerary_items = driver.find_elements(By.CSS_SELECTOR, "div[data-testid^='trip-search-result-']")
+        # ⏳ Attente des résultats
+        try:
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "div[data-testid^='trip-search-result-']"))
+            )
+        except Exception as e:
+            driver.save_screenshot("error_screenshot.png")
+            print(f"Erreur de chargement des résultats: {e}")
+            return [f"Échec du chargement pour {origin} → {destination}"]
 
-    for item in itinerary_items:
-        vehicle = item.find_element(By.XPATH, ".//h1[contains(@class, 'sc')]").text
-        distance = item.find_element(By.CSS_SELECTOR, "time").text
-        price = item.find_element(By.XPATH, ".//span[contains(text(), '€')]").text
+        # ⬇️ Charger plus de résultats si possible
+        try:
+            load_more_button = WebDriverWait(driver, 2).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "button[data-testid='show-more-0']"))
+            )
+            load_more_button.click()
+        except:
+            pass
 
-        itinerary_details.append({
-            'vehicle': vehicle,
-            'distance': distance,
-            'price': price
-        })
+        # 📋 Extraction des itinéraires
+        itinerary_details = []
+        itinerary_items = driver.find_elements(By.CSS_SELECTOR, "div[data-testid^='trip-search-result-']")
 
-    # Extract the itineraries
-    itineraries = []
-    for itinerary in itinerary_details:
-        itineraries.append(
-            f"Vehicle: {itinerary['vehicle']} | Distance: {itinerary['distance']} | Price: {itinerary['price']}")
+        for item in itinerary_items:
+            try:
+                vehicle = item.find_element(By.XPATH, ".//h1[contains(@class, 'sc')]").text
+                distance = item.find_element(By.CSS_SELECTOR, "time").text
+                price = item.find_element(By.XPATH, ".//span[contains(text(), '€')]").text
 
-    print(itineraries)
+                itinerary_details.append({
+                    'vehicle': vehicle,
+                    'distance': distance,
+                    'price': price,
+                    'adresse_origine': origin,
+                    'adresse_destination': destination
+                })
+            except:
+                continue
 
-    return itineraries
+        itineraries = []
+        for i in itinerary_details:
+            itineraries.append(
+                f"Adresse: {i['adresse_origine']} → {i['adresse_destination']} | Moyen: {i['vehicle']} | Temps: {i['distance']} | Prix: {i['price']}"
+            )
 
+        return itineraries
 
-# Loop through each city pair and get the itineraries
-for i, origin in enumerate(cities):
-    for j, destination in enumerate(cities):
-        if i != j:  # Avoid same city pair (e.g., Paris to Paris)
-            print(f"Scraping {origin} to {destination}...")
-            itineraries = get_itineraries_for_pair(origin, destination)
-
-            # Ensure the column exists in the DataFrame for each pair
-            column_name = f"{origin} to {destination}"
-            itinerary_df[column_name] = pd.Series(itineraries)
-
-# Print the DataFrame with results
-print(itinerary_df)
-
-# Print time taken
-print(f"Total time: {time.time() - start_time:.2f} seconds")
-
-# Close the driver
-driver.quit()
+    finally:
+        driver.quit()
