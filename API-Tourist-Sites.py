@@ -7,7 +7,7 @@ from geopy.distance import geodesic
 from geopy.geocoders import Nominatim
 from tabulate import tabulate
 
-# Chargement de la clé API depuis le fichier .env ou utilisation d'une valeur par défaut
+# Chargement de la clé API 
 DEFAULT_API_KEY = " !key "
 try:
     load_dotenv()
@@ -32,9 +32,9 @@ class RecuperateurSitesTouristiques:
             self.cle_api = input("Veuillez entrer votre clé API Groq: ")
             
         self.url_base = "https://api.groq.com/openai/v1/chat/completions"
-        self.limite_sites = 20  # Limite maximale de sites touristiques à récupérer
+        self.limite_sites = 20 
         
-        # Liste prédéfinie des catégories de sites touristiques communes
+        # Liste prédéfinie des catégories de sites touristiques 
         self.categories_predefinies = [
             "Édifices et patrimoine religieux",
             "Châteaux et architectures civiles",
@@ -117,7 +117,7 @@ class RecuperateurSitesTouristiques:
         # Vérification de la limite maximum
         nombre_sites = min(nombre_sites, self.limite_sites)
         
-        # Construction du prompt pour Groq avec les préférences utilisateur
+        # Prompt pour Groq 
         prompt = f"""
         Veuillez fournir une liste des {nombre_sites} sites touristiques les plus importants de {ville} qui correspondent aux critères suivants:
         
@@ -154,13 +154,13 @@ class RecuperateurSitesTouristiques:
         Ne mettez AUCUN TEXTE supplémentaire avant ou après le JSON, juste le tableau JSON lui-même.
         """
         
-        # Préparation de la requête API
+        # Requête API
         en_tetes = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.cle_api}"
         }
         charge_utile = {
-            "model": "llama3-70b-8192",  # Utilisation du modèle Llama 3 70B de Groq
+            "model": "llama3-70b-8192",  
             "messages": [
                 {
                     "role": "user",
@@ -172,11 +172,11 @@ class RecuperateurSitesTouristiques:
         }
         
         try:
-            # Envoi de la requête à l'API
+         
             reponse = requests.post(self.url_base, headers=en_tetes, json=charge_utile)
-            reponse.raise_for_status()  # Lève une exception pour les erreurs HTTP
+            reponse.raise_for_status() 
             
-            # Analyse de la réponse
+         
             resultat = reponse.json()
             
             # Extraction du contenu de la réponse
@@ -190,11 +190,11 @@ class RecuperateurSitesTouristiques:
                 contenu = contenu[:-3]
             contenu = contenu.strip()
             
-            # Analyse du JSON
+          
             try:
                 sites_touristiques = json.loads(contenu)
                 
-                # Limitation du nombre de sites selon la limite configurée
+               
                 sites_touristiques = sites_touristiques[:self.limite_sites]
                 
                 return sites_touristiques
@@ -204,7 +204,7 @@ class RecuperateurSitesTouristiques:
                 
                 # Tentative de correction du JSON mal formaté
                 try:
-                    # Suppression de caractères non-JSON potentiels au début et à la fin
+             
                     while not (contenu.startswith('[') and contenu.endswith(']')):
                         if not contenu.startswith('['):
                             contenu = contenu[contenu.find('['):]
@@ -272,7 +272,7 @@ class OptimiseurItineraire:
         self.recuperateur = recuperateur
         self.geolocator = Nominatim(user_agent="planificateur_touristique")
         self.temps_entre_geocodage = temps_entre_geocodage
-        self.cache_coordonnees = {}  # Cache pour les coordonnées des lieux
+        self.cache_coordonnees = {}  
     
     def obtenir_coordonnees(self, adresse, ville):
         """
@@ -290,13 +290,13 @@ class OptimiseurItineraire:
         if cle_cache in self.cache_coordonnees:
             return self.cache_coordonnees[cle_cache]
         
-        # Ajoute la ville à l'adresse pour améliorer la précision du géocodage
+        # Ajoute la ville à l'adresse
         adresse_complete = f"{adresse}, {ville}"
         
         try:
             # Utilise le géocodage pour obtenir les coordonnées
             lieu = self.geolocator.geocode(adresse_complete)
-            time.sleep(self.temps_entre_geocodage)  # Attente pour respecter les limites API
+            time.sleep(self.temps_entre_geocodage)  
             
             if lieu:
                 coordonnees = (lieu.latitude, lieu.longitude)
@@ -323,7 +323,7 @@ class OptimiseurItineraire:
         """
         if coord1 and coord2:
             return geodesic(coord1, coord2).kilometers
-        return float('inf')  # Retourne l'infini si les coordonnées ne sont pas valides
+        return float('inf')
     
     def optimiser_itineraire(self, sites, ville, site_depart_nom):
         """
@@ -345,7 +345,7 @@ class OptimiseurItineraire:
             adresse = site.get("adresse", "")
             site["coordonnees"] = self.obtenir_coordonnees(adresse, ville)
         
-        # Sites dont les coordonnées ont été trouvées
+     
         sites_valides = [site for site in sites if site.get("coordonnees")]
         
         if not sites_valides:
@@ -367,7 +367,7 @@ class OptimiseurItineraire:
         itineraire = [site_depart]
         sites_restants = [site for site in sites_valides if site != site_depart]
         
-        # Algorithme glouton pour trouver la destination la plus proche suivante
+        # Pour trouver la destination la plus proche suivante
         while sites_restants:
             site_actuel = itineraire[-1]
             coordonnees_actuelles = site_actuel["coordonnees"]
@@ -499,7 +499,7 @@ class OptimiseurItineraire:
             # Demande à l'utilisateur de choisir un site de départ
             depart_input = input("Par quel site souhaitez-vous commencer votre visite? Entrez le nom ou le numéro du site: ")
             
-            # Vérifie si l'entrée est un numéro
+       
             try:
                 depart_index = int(depart_input.strip()) - 1
                 if 0 <= depart_index < len(sites):
@@ -507,12 +507,12 @@ class OptimiseurItineraire:
             except ValueError:
                 pass
             
-            # Sinon, considère l'entrée comme un nom de site
+         
             return depart_input.strip()
             
         except Exception as e:
             print(f"Erreur lors du choix du site de départ: {e}")
-            return sites[0]["nom"]  # Retourne le premier site en cas d'erreur
+            return sites[0]["nom"]  
 
 
 def installer_dependances():
@@ -535,24 +535,24 @@ def installer_dependances():
 
 
 def main():
-    # Installation des dépendances si nécessaire
+   
     installer_dependances()
     
-    # Création d'une instance de récupérateur
+  
     recuperateur = RecuperateurSitesTouristiques()
     
-    # Obtention des sites touristiques pour une ville
+
     ville = input(recuperateur.afficher_message("ville"))
     
     nombre_sites_input = input(recuperateur.afficher_message("nombre_sites"))
     try:
         nombre_sites = min(int(nombre_sites_input), recuperateur.limite_sites)
     except ValueError:
-        nombre_sites = 10  # Valeur par défaut
+        nombre_sites = 10 
     
     print(recuperateur.afficher_message("recuperation", ville))
     
-    # Utilisation des catégories prédéfinies
+   
     categories_disponibles = recuperateur.obtenir_categories_disponibles(ville)
     
     if categories_disponibles:
@@ -573,10 +573,10 @@ def main():
             categories_input = input()
             categories_souhaitees = [cat.strip() for cat in categories_input.split(",")] if categories_input.strip() else []
             
-            # Filtrage des catégories disponibles pour l'exclusion
+            # Catégories disponibles 
             categories_restantes = [cat for cat in categories_disponibles if cat not in categories_souhaitees]
             
-            # Demande des catégories à exclure parmi celles qui restent
+            # Catégories à exclure 
             if categories_restantes:
                 reponse_exclusion = input(recuperateur.afficher_message("exclure"))
                 if recuperateur.adapter_reponse_oui_non(reponse_exclusion):
