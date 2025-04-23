@@ -5,6 +5,7 @@ The aim of this project is to provide users with a personalized route connecting
 
 ## Set-up 
 **1.** Download Anaconda Distribution : https://www.anaconda.com/download
+
 **2.** Extract the files from cityexplorer.zip and make sure the folders are structured as following :
 ```bash
 ├── cityexplorer
